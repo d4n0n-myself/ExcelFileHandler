@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using Excel = Microsoft.Office.Interop.Excel;
 
 namespace ExcelTestFramework
@@ -12,8 +14,11 @@ namespace ExcelTestFramework
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            WriteFileFunction();
-
+            //WriteFileFunction();
+            //ImproveTxtFile();
+            //Cut();
+            Skip();
+            
             stopwatch.Stop();
             Console.WriteLine("Time elapsed (in ms) : " + stopwatch.ElapsedMilliseconds);
             Console.WriteLine("Ready to go");
@@ -42,6 +47,42 @@ namespace ExcelTestFramework
             }
         }
 
+        private static void ImproveTxtFile()
+        {
+            var str = File.ReadLines("output.txt");
+            var processedStrings = new List<string>();
+
+            foreach (var s in str)
+            {
+                var origArray = s.Split(';');
+                var processedString = origArray[1];
+                processedString = processedString.Replace("пр-кт","").Replace("б-р.","");
+                var index = processedString.IndexOf("п.");
+                if (index != -1)
+                {
+                    index += 2;
+                    processedString = processedString.Substring(index);
+                }
+
+                var temp = origArray[0] + ';' + processedString;
+                processedStrings.Add(temp.Replace("  "," ").Replace(", ",",").Replace(" ,",","));
+            }
+            
+            File.WriteAllLines("ready-output.txt", processedStrings);
+        }
+
+        private static void Cut()
+        {
+            var str = File.ReadLines("ready-output.txt");
+            File.WriteAllLines("ready-output1.txt", str.Take(500000));
+        }
+
+        private static void Skip()
+        {
+            var str = File.ReadLines("ready-output.txt");
+            File.WriteAllLines("ready-output2.txt", str.Skip(500000));
+        }
+        
         private static string ProcessStringAddress(string value)
         {
             int index;
@@ -53,7 +94,7 @@ namespace ExcelTestFramework
             {
                 index = value.IndexOf("г.") == -1 ?
                        value.IndexOf("с.") == -1 ?
-                           value.IndexOf("п.") : value.IndexOf("с.")
+                           value.IndexOf("п.", 2) : value.IndexOf("с.")
                    : value.IndexOf("г.");
             }
 
